@@ -1,0 +1,30 @@
+name: 🚀 Feature Request
+description: Create a new ticket for a new feature request
+labels:
+  - "type: feature"
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Please provide a clear and concise description of the feature.
+    validations:
+      required: true
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Requirements
+      description: Please provide the requirements of the feature.
+      placeholder: |
+        1. Users will be able to enter to units screen from measurements setup screen
+        2. Users will be asked to save their changes when leaving the units screen without saving
+        3. Users will be redirected to measurements screen after saving their units changes
+      render: Text
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context about the feature here.
+      render: Text
