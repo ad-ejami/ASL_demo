@@ -1,0 +1,59 @@
+name: 🐛 Bug Report
+description: Create a bug report to help us improve the quality
+labels:
+  - "type: bug"
+  - "status: Todo"
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Please provide a clear and concise description of what the bug is.
+      placeholder: Short and explicit description of your incident...
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: How do you trigger this bug? Please walk us through it step by step.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+      render: Text
+    validations:
+      required: true
+  - type: input
+    id: browser-model
+    attributes:
+      label: Browser model(s)
+      description: If the issue is specific to a browset model, please specify them.
+      placeholder: Chrome, Firefox, Brave.
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or screen recording
+      description: If applicable, add screenshots or a screen recording to help explain your problem.
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.
+      render: Text
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Please specify the environment information.
+      value: |
+        | Software | Version |
+        |----------|---------|
+        | OS           |         |
+        | ASL demo  |         |
