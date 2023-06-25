@@ -1,12 +1,7 @@
-import Navbar from "@components/Navbar";
+import Learning from "@templates/Learning";
 
 const Learn = () => {
-  return (
-    <div>
-      <Navbar />
-      <h1>This is the learn page</h1>
-    </div>
-  );
+  return (<Learning />);
 }
 
 export default Learn;
