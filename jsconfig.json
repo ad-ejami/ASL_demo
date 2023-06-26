@@ -5,7 +5,8 @@
       "@pages": ["pages/"],
       "@styles/*": ["styles/*"],
       "@templates/*": ["templates/*"],
-      "@components/*": ["components/*"]
+      "@components/*": ["components/*"],
+      "@lib/*": ["lib/*"]
     }
   }
 }

@@ -9,6 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@mediapipe/hands": "^0.4.1675469240",
+    "@tensorflow-models/hand-pose-detection": "^2.0.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.0.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.0.0",
+    "@tensorflow/tfjs-converter": "^4.0.0",
+    "@tensorflow/tfjs-core": "^4.0.0",
     "eslint": "8.43.0",
     "eslint-config-next": "^13.4.7",
     "eslint-config-prettier": "^8.8.0",
