@@ -1,4 +1,5 @@
 import Navbar from "@components/Navbar";
+import ObjCamara from "@components/ObjCamara";
 import Camara from "@components/Camara";
 
 const Alphabet = () => {

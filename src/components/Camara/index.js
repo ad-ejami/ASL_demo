@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { createDetector, SupportedModels } from "@tensorflow-models/hand-pose-detection";
 import '@tensorflow/tfjs-backend-webgl';
-// import { drawHands } from "../../lib/utils";
+import { load_model, classesDir } from "../../lib/utils";
+import * as tf from '@tensorflow/tfjs';
 import { useAnimationFrame } from "@lib/hooks/useAnimationFrame";
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 import styles from "@styles/Camara.module.css";
 import { min } from '@tensorflow/tfjs-core';
+tf.setBackend('webgl');
 
-async function setupVideo() {
+const setupVideo = async () => {
   const video = document.getElementById('video');
-  const stream = await window.navigator.mediaDevices.getUserMedia({ video: true });
+  const stream = await window.navigator.mediaDevices.getUserMedia({ video: true, audio: false });
 
   video.srcObject = stream;
   await new Promise((resolve) => {
@@ -25,21 +27,21 @@ async function setupVideo() {
   return video;
 }
 
-async function setupDetector() {
+const setupDetector = async () => {
   const model = SupportedModels.MediaPipeHands;
   const detector = await createDetector(
-      model,
-      {
-          runtime: "mediapipe",
-          maxHands: 1,
-          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands'
-      }
+    model,
+    {
+        runtime: "mediapipe",
+        maxHands: 1,
+        solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands'
+    }
   );
 
   return detector;
 }
 
-async function setupCanvas(video) {
+const setupCanvas = async (video) => {
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
 
@@ -47,35 +49,6 @@ async function setupCanvas(video) {
   canvas.height = video.height;
 
   return ctx;
-}
-
-export const drawboxHand = (hands, ctx) => {
-    if (hands.length <= 0) { return; }
-    for (let i = 0; i < hands.length; i++) {
-        ctx.fillStyle = hands[i].handedness === 'Left' ? 'black' : 'Blue';
-        ctx.strokeStyle = 'White';
-        ctx.lineWidth = 2;
-        let minY = hands[i].keypoints[0].y;
-        let maxY = hands[i].keypoints[0].y;
-        let minX = hands[i].keypoints[0].x;
-        let maxX = hands[i].keypoints[0].x;
-
-        for (let y = 0; y < hands[i].keypoints.length; y++) {
-            const keypoint = hands[i].keypoints[y];
-            if (minY > keypoint.y) minY = keypoint.y;
-            if (maxY < keypoint.y) maxY = keypoint.y;
-            if (minX > keypoint.x) minX = keypoint.x;
-            if (maxX < keypoint.x) maxX = keypoint.x;
-        }
-        const points = [
-            {x: minX - 30, y: minY - 30},
-            {x: minX - 30, y: maxY + 30},
-            {x: maxX + 30, y: maxY + 30},
-            {x: maxX + 30, y: minY - 30},
-            {x: minX - 30, y: minY - 30},
-        ]
-        drawPath(points, ctx);
-    }
 }
 
 export const drawHands = (hands, ctx, showNames = false) => {
@@ -128,6 +101,21 @@ const FINGER_LOOKUP_INDICES = {
   pinky: [0, 17, 18, 19, 20],
 };
 
+const process_input = (img64) => {
+    // const tfimg = tf.browser.fromPixels(video_frame); // .toInt();
+    // const expandedimg = tfimg.transpose([0,1,2]).expandDims();
+    const b = Buffer.from(img64, 'base64');
+    // const imgBuffer =  tf.util.encodeString(img64, 'base64').buffer;
+    // const raw = new Uint8Array(imgBuffer);
+    // let tfimg = decodeJpeg(raw);
+    const tfimg = tf.node.decodeImage(b);
+    const scalar = tf.scalar(255);
+    const imgResize = tf.image.resizeNearestNeighbor(tfimg, [200, 200]);
+    const tensorScaled = imgResize.div(scalar);
+    const img = tf.reshape(tensorScaled, [1,200,200,3])
+    return img;
+};
+
 const drawPath = (points, ctx, closePath = false) => {
   const region = new Path2D();
   region.moveTo(points[0]?.x, points[0]?.y);
@@ -141,17 +129,18 @@ const drawPath = (points, ctx, closePath = false) => {
   ctx.stroke(region);
 }
 
-export default function Camara() {
+const Camara = () => {
   const detectorRef = useRef();
   const videoRef = useRef();
   const [ctx, setCtx] = useState();
+  const [model, setModel] = useState();
 
   useEffect(() => {
     async function initialize() {
         videoRef.current = await setupVideo();
         const ctx = await setupCanvas(videoRef.current);
         detectorRef.current = await setupDetector();
-
+        setModel(await load_model());
         setCtx(ctx);
     }
 
@@ -172,6 +161,50 @@ export default function Camara() {
     drawboxHand(hands, ctx);
   }, !!(detectorRef.current && videoRef.current && ctx));
 
+  const drawboxHand = (hands, ctx) => {
+    if (hands.length <= 0) { return; } 
+    for (let i = 0; i < hands.length; i++) {
+        ctx.fillStyle = hands[i].handedness === 'Left' ? 'black' : 'Blue';
+        ctx.strokeStyle = 'White';
+        ctx.lineWidth = 2;
+        let minY = hands[i].keypoints[0].y;
+        let maxY = hands[i].keypoints[0].y;
+        let minX = hands[i].keypoints[0].x;
+        let maxX = hands[i].keypoints[0].x;
+
+        for (let y = 0; y < hands[i].keypoints.length; y++) {
+            const keypoint = hands[i].keypoints[y];
+            if (minY > keypoint.y) minY = keypoint.y;
+            if (maxY < keypoint.y) maxY = keypoint.y;
+            if (minX > keypoint.x) minX = keypoint.x;
+            if (maxX < keypoint.x) maxX = keypoint.x;
+        }
+        const points = [
+            {x: minX - 30, y: minY - 30},
+            {x: minX - 30, y: maxY + 30},
+            {x: maxX + 30, y: maxY + 30},
+            {x: maxX + 30, y: minY - 30},
+            {x: minX - 30, y: minY - 30},
+        ]
+        drawPath(points, ctx);
+        console.log('videoRef.current');
+        console.log(ctx);
+        const canvas = document.getElementById('canvas2');
+        const oneSize = (maxX + 30) - (minX - 30) > (maxY + 30) - (minY - 30) ? (maxX + 30) - (minX - 30) : (maxY + 30) - (minY - 30);
+
+        canvas.width = oneSize;
+        canvas.height = oneSize;
+        canvas.getContext('2d').drawImage(videoRef.current, minX - 30, minY - 30, oneSize, oneSize, 0, 0, oneSize, oneSize);
+
+        const image = canvas.toDataURL();
+
+        // console.log(image);
+
+        const prediction = model.predict(process_input(image)).dataSync();
+        console.log(prediction.indexOf(Math.max(...prediction)));
+    }
+    }
+
   return (
     <div className={styles.container}>
         <main className={styles.main}>
@@ -185,6 +218,16 @@ export default function Camara() {
                     maxWidth: "85vw"
                 }}
                 id="canvas">
+            </canvas>
+            <canvas
+                style={{
+                    transform: "scaleX(-1)",
+                    zIndex: 1,
+                    borderRadius: "1rem",
+                    boxShadow: "0 3px 10px rgb(0 0 0)",
+                    maxWidth: "85vw"
+                }}
+                id="canvas2">
             </canvas>
             <video
                 style={{
@@ -204,3 +247,5 @@ export default function Camara() {
     </div>
   )
 }
+
+export default Camara;
