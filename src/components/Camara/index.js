@@ -5,6 +5,7 @@ import '@tensorflow/tfjs-backend-webgl';
 import { useAnimationFrame } from "@lib/hooks/useAnimationFrame";
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 import styles from "@styles/Camara.module.css";
+import { min } from '@tensorflow/tfjs-core';
 
 async function setupVideo() {
   const video = document.getElementById('video');
@@ -46,6 +47,35 @@ async function setupCanvas(video) {
   canvas.height = video.height;
 
   return ctx;
+}
+
+export const drawboxHand = (hands, ctx) => {
+    if (hands.length <= 0) { return; }
+    for (let i = 0; i < hands.length; i++) {
+        ctx.fillStyle = hands[i].handedness === 'Left' ? 'black' : 'Blue';
+        ctx.strokeStyle = 'White';
+        ctx.lineWidth = 2;
+        let minY = hands[i].keypoints[0].y;
+        let maxY = hands[i].keypoints[0].y;
+        let minX = hands[i].keypoints[0].x;
+        let maxX = hands[i].keypoints[0].x;
+
+        for (let y = 0; y < hands[i].keypoints.length; y++) {
+            const keypoint = hands[i].keypoints[y];
+            if (minY > keypoint.y) minY = keypoint.y;
+            if (maxY < keypoint.y) maxY = keypoint.y;
+            if (minX > keypoint.x) minX = keypoint.x;
+            if (maxX < keypoint.x) maxX = keypoint.x;
+        }
+        const points = [
+            {x: minX - 30, y: minY - 30},
+            {x: minX - 30, y: maxY + 30},
+            {x: maxX + 30, y: maxY + 30},
+            {x: maxX + 30, y: minY - 30},
+            {x: minX - 30, y: minY - 30},
+        ]
+        drawPath(points, ctx);
+    }
 }
 
 export const drawHands = (hands, ctx, showNames = false) => {
@@ -117,58 +147,60 @@ export default function Camara() {
   const [ctx, setCtx] = useState();
 
   useEffect(() => {
-      async function initialize() {
-          videoRef.current = await setupVideo();
-          const ctx = await setupCanvas(videoRef.current);
-          detectorRef.current = await setupDetector();
+    async function initialize() {
+        videoRef.current = await setupVideo();
+        const ctx = await setupCanvas(videoRef.current);
+        detectorRef.current = await setupDetector();
 
-          setCtx(ctx);
-      }
+        setCtx(ctx);
+    }
 
-      initialize();
+    initialize();
   }, []);
 
   useAnimationFrame(async delta => {
-      const hands = await detectorRef.current.estimateHands(
-          video,
-          {
-              flipHorizontal: false
-          }
-      );
+    const hands = await detectorRef.current.estimateHands(
+        video,
+        {
+            flipHorizontal: false
+        }
+    );
 
-      ctx.clearRect(0, 0, videoRef.current.videoWidth, videoRef.current.videoHeight);
-      ctx.drawImage(videoRef.current, 0, 0, videoRef.current.videoWidth, videoRef.current.videoHeight);
-      drawHands(hands, ctx);
+    ctx.clearRect(0, 0, videoRef.current.videoWidth, videoRef.current.videoHeight);
+    ctx.drawImage(videoRef.current, 0, 0, videoRef.current.videoWidth, videoRef.current.videoHeight);
+    // drawHands(hands, ctx);
+    drawboxHand(hands, ctx);
   }, !!(detectorRef.current && videoRef.current && ctx));
 
   return (
-      <div className={styles.container}>
-          <main className={styles.main}>
-              <code style={{ marginBottom: '1rem' }}>Work in progress...</code>
-              <canvas
-                  style={{
-                      transform: "scaleX(-1)",
-                      zIndex: 1,
-                      borderRadius: "1rem",
-                      boxShadow: "0 3px 10px rgb(0 0 0)",
-                      maxWidth: "85vw"
-                  }}
-                  id="canvas">
-              </canvas>
-              <video
-                  style={{
-                      visibility: "hidden",
-                      transform: "scaleX(-1)",
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: 0,
-                      height: 0
-                  }}
-                  id="video"
-                  playsInline>
-              </video>
-          </main>
-      </div>
+    <div className={styles.container}>
+        <main className={styles.main}>
+            <code style={{ marginBottom: '1rem' }}>Work in progress...</code>
+            <canvas
+                style={{
+                    transform: "scaleX(-1)",
+                    zIndex: 1,
+                    borderRadius: "1rem",
+                    boxShadow: "0 3px 10px rgb(0 0 0)",
+                    maxWidth: "85vw"
+                }}
+                id="canvas">
+            </canvas>
+            <video
+                style={{
+                    visibility: "hidden",
+                    transform: "scaleX(-1)",
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: 0,
+                    height: 0
+                }}
+                id="video"
+                playsInline>
+            </video>
+        </main>
+        <div className={styles.output}><h1 className={styles.text}>A</h1></div>
+    </div>
   )
 }

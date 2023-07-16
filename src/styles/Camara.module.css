@@ -1,8 +1,11 @@
 .container {
   padding: 0 2rem;
+  display: flex;
+  flex-direction: row;
 }
 
 .main {
+  width: 80%;
   min-height: 100vh;
   padding: 2rem 0;
   flex: 1;
@@ -10,4 +13,17 @@
   flex-direction: column;
   /* justify-content: center; */
   align-items: center;
+}
+
+.output {
+  width: 20%;
+  height: 80%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text {
+  font-size: 450px;
 }

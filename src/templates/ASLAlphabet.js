@@ -5,7 +5,9 @@ const Alphabet = () => {
   return (
     <div>
       <Navbar />
-      <h1>This is the alphabet</h1>
+      <div style={{width: '100%', display: 'flex', justifyContent: 'center'}}>
+        <h1>The alphabet sample</h1>
+      </div>
       <Camara />
     </div>
   );
